@@ -1,0 +1,9 @@
+node_modules/
+.next/
+dist/
+out/
+coverage/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+.DS_Store

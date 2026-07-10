@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 42 33% 96%;
+    --foreground: 210 24% 12%;
+    --card: 40 32% 99%;
+    --card-foreground: 210 24% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 221 39% 11%;
+    --primary: 158 43% 31%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 42 22% 92%;
+    --secondary-foreground: 221 39% 11%;
+    --muted: 42 22% 92%;
+    --muted-foreground: 215 11% 42%;
+    --accent: 214 30% 94%;
+    --accent-foreground: 215 34% 34%;
+    --destructive: 358 77% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 18% 89%;
+    --input: 216 18% 89%;
+    --ring: 158 43% 31%;
+    --ai: 214 34% 43%;
+    --ai-foreground: 214 34% 34%;
+    --ai-soft: 214 34% 94%;
+    --positive: 153 70% 35%;
+    --positive-soft: 150 48% 94%;
+    --negative: 0 62% 54%;
+    --negative-soft: 0 76% 96%;
+    --warning: 38 92% 42%;
+    --warning-soft: 43 100% 93%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 210 18% 8%;
+    --foreground: 42 26% 92%;
+    --card: 210 16% 11%;
+    --card-foreground: 42 26% 92%;
+    --popover: 210 18% 12%;
+    --popover-foreground: 210 43% 97%;
+    --primary: 154 43% 55%;
+    --primary-foreground: 210 18% 8%;
+    --secondary: 210 14% 15%;
+    --secondary-foreground: 210 43% 97%;
+    --muted: 210 14% 15%;
+    --muted-foreground: 42 10% 68%;
+    --accent: 214 28% 19%;
+    --accent-foreground: 214 50% 76%;
+    --destructive: 357 100% 71%;
+    --destructive-foreground: 216 23% 8%;
+    --border: 224 13% 19%;
+    --input: 224 13% 19%;
+    --ring: 154 43% 55%;
+    --ai: 214 45% 66%;
+    --ai-foreground: 214 60% 76%;
+    --ai-soft: 214 28% 17%;
+    --positive: 153 63% 51%;
+    --positive-soft: 153 49% 16%;
+    --negative: 357 100% 71%;
+    --negative-soft: 357 45% 16%;
+    --warning: 39 87% 62%;
+    --warning-soft: 39 45% 17%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      "cv02" 1,
+      "cv03" 1,
+      "cv04" 1,
+      "tnum" 1;
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.14) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.1) 1px, transparent 1px),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+    background-size:
+      44px 44px,
+      44px 44px,
+      auto;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .soft-panel {
+    @apply border border-border/90 shadow-calm-sm;
+    background-color: hsl(var(--card) / 0.92);
+    backdrop-filter: blur(14px);
+  }
+
+  .quiet-panel {
+    @apply border border-border/70;
+    background-color: hsl(var(--secondary) / 0.46);
+  }
+
+  .hairline {
+    @apply border-border/70;
+  }
+}
