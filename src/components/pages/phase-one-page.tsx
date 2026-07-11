@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowDownRight,
@@ -119,6 +120,12 @@ function MarketPageContent() {
               <Badge variant="warning">{todayBrief.mood}</Badge>
             </div>
             <MarketPulseChart />
+            <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-6 text-muted-foreground">实践问题：当前风险偏好下，一次买入宽基后会经历怎样的收益与回撤？</p>
+              <Button asChild className="shrink-0" size="sm" variant="secondary">
+                <Link href="/learning?practice=broad-etf&source=market#paper-investing">带入纸上实验</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -166,6 +173,7 @@ function IndustryPageContent() {
       {hotSectors.map((sector) => {
         const Icon = sector.icon;
         const isPositive = sector.change >= 0;
+        const practiceAsset = sector.name === "AI 算力" ? "growth-stock" : sector.name === "高股息" ? "dividend-etf" : "active-fund";
 
         return (
           <Card key={sector.name} className="transition-colors duration-150 hover:border-primary/30">
@@ -207,6 +215,9 @@ function IndustryPageContent() {
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">{sector.risk}</p>
                 </div>
               </div>
+              <Button asChild className="mt-5 w-full" size="sm" variant="secondary">
+                <Link href={`/learning?practice=${practiceAsset}&source=industry#paper-investing`}>用模拟验证行业判断</Link>
+              </Button>
             </CardContent>
           </Card>
         );
@@ -218,7 +229,7 @@ function IndustryPageContent() {
 function AiResearchPageContent() {
   return (
     <section className="grid gap-4 xl:grid-cols-3">
-      {researchPicks.map((pick) => (
+      {researchPicks.map((pick, index) => (
         <Card key={pick.asset} className="border-ai/20">
           <CardContent className="grid h-full gap-4 p-5">
             <div className="flex items-start justify-between gap-3">
@@ -256,7 +267,9 @@ function AiResearchPageContent() {
                 <span>更新：{pick.updatedAt}</span>
               </div>
               <RiskDisclaimer compact />
-              <Button variant="secondary">展开研究问题</Button>
+              <Button asChild variant="secondary">
+                <Link href={`/learning?practice=${["broad-etf", "growth-stock", "dividend-etf"][index]}&source=ai-research#paper-investing`}>用纸上实验验证</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -24,6 +24,21 @@ type SimulatorState = {
   startedAt: string;
 };
 
+const researchContexts = {
+  market: {
+    label: "来自市场判断",
+    question: "当前风险偏好回升，一次买入宽基后，收益与回撤是否匹配你的预期？",
+  },
+  industry: {
+    label: "来自行业研究",
+    question: "资金热度能否转化为更稳定的价格表现，还是只放大了短期波动？",
+  },
+  "ai-research": {
+    label: "来自 AI 投研",
+    question: "把研究结论放进模拟行情后，正方逻辑和反方风险分别在哪些日期出现？",
+  },
+} as const;
+
 function subscribe(callback: () => void) {
   window.addEventListener("storage", callback);
   window.addEventListener(SIMULATOR_EVENT, callback);
@@ -59,6 +74,15 @@ function saveState(state: SimulatorState) {
   window.dispatchEvent(new Event(SIMULATOR_EVENT));
 }
 
+function subscribeToLocation(callback: () => void) {
+  window.addEventListener("popstate", callback);
+  return () => window.removeEventListener("popstate", callback);
+}
+
+function getLocationSnapshot() {
+  return window.location.search;
+}
+
 function buildSimulation(assetId: string, amount: number, mode: SimulationMode) {
   const asset = simulationAssets.find((item) => item.id === assetId) ?? simulationAssets[0];
   let units = 0;
@@ -76,6 +100,16 @@ function buildSimulation(assetId: string, amount: number, mode: SimulationMode) 
   });
 }
 
+function calculateMaxDrawdown(prices: number[]) {
+  let peak = prices[0];
+  let maxDrawdown = 0;
+  for (const price of prices) {
+    peak = Math.max(peak, price);
+    maxDrawdown = Math.min(maxDrawdown, ((price / peak) - 1) * 100);
+  }
+  return maxDrawdown;
+}
+
 /**
  * A paper-investing exercise teaches recurring investment through observable
  * outcomes. Prices are fixed mock data and the component never creates orders.
@@ -83,6 +117,14 @@ function buildSimulation(assetId: string, amount: number, mode: SimulationMode) 
 export function InvestmentSimulator() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, () => DEFAULT_SIMULATOR);
   const savedState = useMemo(() => parseState(snapshot), [snapshot]);
+  const locationSearch = useSyncExternalStore(subscribeToLocation, getLocationSnapshot, () => "");
+  const researchIntent = useMemo(() => {
+    const params = new URLSearchParams(locationSearch);
+    const assetId = params.get("practice");
+    const source = params.get("source") as keyof typeof researchContexts | null;
+    const assetExists = simulationAssets.some((asset) => asset.id === assetId);
+    return assetExists && source && researchContexts[source] ? { assetId: assetId as string, source, ...researchContexts[source] } : null;
+  }, [locationSearch]);
   const [draftMode, setDraftMode] = useState<SimulationMode>(savedState.mode);
   const [draftAssetId, setDraftAssetId] = useState(savedState.assetId);
   const [draftAmount, setDraftAmount] = useState(savedState.amount);
@@ -93,6 +135,7 @@ export function InvestmentSimulator() {
   const activeAsset = simulationAssets.find((item) => item.id === activeAssetId) ?? simulationAssets[0];
   const records = useMemo(() => buildSimulation(activeAssetId, activeAmount, activeMode), [activeAssetId, activeAmount, activeMode]);
   const latest = records[records.length - 1];
+  const maxDrawdown = calculateMaxDrawdown(activeAsset.prices);
   const isPositive = latest.returnRate >= 0;
 
   function startSimulation() {
@@ -105,8 +148,16 @@ export function InvestmentSimulator() {
     saveState({ ...savedState, active: false });
   }
 
+  function applyResearchIntent() {
+    if (!researchIntent) return;
+    setDraftMode("single");
+    setDraftAssetId(researchIntent.assetId);
+    setDraftAmount(1000);
+    saveState({ active: false, mode: "single", assetId: researchIntent.assetId, amount: 1000, startedAt: "" });
+  }
+
   return (
-    <section>
+    <section id="paper-investing" className="scroll-mt-24">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="inline-flex items-center gap-2 text-xs font-medium text-primary"><FlaskConical className="size-4" />动手实操 · Mock</p>
@@ -115,6 +166,17 @@ export function InvestmentSimulator() {
         </div>
         {savedState.active ? <Button onClick={resetSimulation} size="sm" variant="ghost"><RefreshCcw className="size-4" />调整实验</Button> : null}
       </div>
+
+      {researchIntent ? (
+        <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-ai/20 bg-ai-soft/45 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div>
+            <Badge variant="ai">{researchIntent.label}</Badge>
+            <p className="mt-3 max-w-3xl text-sm leading-6">{researchIntent.question}</p>
+            <p className="mt-1 text-xs text-muted-foreground">这是待验证的研究假设，不是买入建议。</p>
+          </div>
+          <Button onClick={applyResearchIntent} size="sm" variant="secondary">应用研究方案</Button>
+        </div>
+      ) : null}
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <Card>
@@ -172,10 +234,11 @@ export function InvestmentSimulator() {
               <Badge variant="neutral">固定 Mock 行情</Badge>
             </div>
 
-            <div className="mt-5 grid grid-cols-3 divide-x divide-border/75 border-y border-border/75 py-3">
+            <div className="mt-5 grid grid-cols-2 gap-y-4 border-y border-border/75 py-3 sm:grid-cols-4 sm:divide-x sm:gap-y-0">
               <Metric label="累计投入" value={`¥${latest.invested.toFixed(0)}`} />
               <Metric label="模拟市值" value={`¥${latest.value.toFixed(2)}`} />
               <Metric label="累计收益率" value={`${isPositive ? "+" : ""}${latest.returnRate.toFixed(2)}%`} tone={isPositive ? "positive" : "negative"} />
+              <Metric label="最大回撤" value={`${maxDrawdown.toFixed(2)}%`} tone="negative" />
             </div>
 
             <div className="mt-4 h-56 w-full">
