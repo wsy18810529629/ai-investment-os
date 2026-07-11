@@ -102,3 +102,37 @@ export const quizQuestion = {
   correct: "沪深300 ETF",
   explanation: "ETF 可以按照既定规则跟踪指数，让你通过一个产品持有指数中的一篮子公司。它能分散单一公司风险，但不代表不会亏损。",
 };
+
+export type SimulationAsset = {
+  id: string;
+  name: string;
+  type: string;
+  risk: "较低" | "中等" | "较高";
+  prices: number[];
+};
+
+export const simulationDates = ["7/1", "7/2", "7/3", "7/4", "7/5", "7/6", "7/7", "7/8", "7/9", "7/10"];
+
+export const simulationAssets: SimulationAsset[] = [
+  {
+    id: "broad-etf",
+    name: "沪深300 ETF",
+    type: "宽基 ETF",
+    risk: "中等",
+    prices: [3.82, 3.79, 3.84, 3.81, 3.76, 3.8, 3.87, 3.85, 3.91, 3.94],
+  },
+  {
+    id: "dividend-etf",
+    name: "中证红利 ETF",
+    type: "策略 ETF",
+    risk: "中等",
+    prices: [1.34, 1.35, 1.34, 1.36, 1.37, 1.36, 1.38, 1.39, 1.38, 1.4],
+  },
+  {
+    id: "bond-index",
+    name: "中债综合指数基金",
+    type: "债券基金",
+    risk: "较低",
+    prices: [1.081, 1.082, 1.083, 1.082, 1.084, 1.085, 1.086, 1.085, 1.087, 1.088],
+  },
+];

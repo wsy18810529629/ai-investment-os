@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { assetTypePrimer, beginnerLessons, quizQuestion, reviewConcepts } from "./learning-data";
+import { InvestmentSimulator } from "./investment-simulator";
 
 const STORAGE_KEY = "investment-os-learning-progress";
 const DEFAULT_COMPLETED = ["why-invest"];
@@ -132,6 +133,8 @@ export function LearningExperience() {
           </CardContent>
         </Card>
       </section>
+
+      <InvestmentSimulator />
 
       <section>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
