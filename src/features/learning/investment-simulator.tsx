@@ -96,6 +96,7 @@ function buildSimulation(assetId: string, amount: number, mode: SimulationMode) 
     const value = units * price;
     return {
       date: simulationDates[index],
+      price,
       invested,
       value,
       returnRate: ((value / invested) - 1) * 100,
@@ -131,6 +132,7 @@ export function InvestmentSimulator() {
   const [draftMode, setDraftMode] = useState<SimulationMode>(savedState.mode);
   const [draftAssetId, setDraftAssetId] = useState(savedState.assetId);
   const [draftAmount, setDraftAmount] = useState(savedState.amount);
+  const [showAllRecords, setShowAllRecords] = useState(false);
 
   const activeMode = savedState.active ? savedState.mode : draftMode;
   const activeAssetId = savedState.active ? savedState.assetId : draftAssetId;
@@ -149,6 +151,7 @@ export function InvestmentSimulator() {
   const drawdownImprovement = maxDrawdown - baselineDrawdown;
   const meaningfullyAhead = valueAdvantage > 0.01;
   const meaningfullyBehind = valueAdvantage < -0.01;
+  const visibleRecords = showAllRecords ? records : records.slice(-4);
 
   function startSimulation() {
     const amount = Math.min(10000, Math.max(10, Math.round(draftAmount || 10)));
@@ -273,6 +276,28 @@ export function InvestmentSimulator() {
             <div className="grid gap-2 border-t border-border/75 pt-4 sm:grid-cols-2">
               <p className="inline-flex items-start gap-2 text-sm leading-6"><TrendingUp className="mt-1 size-4 shrink-0 text-primary" />{activeMode === "single" ? "一次买入后，收益完全跟随买入价格之后的涨跌。" : "定投收益由多次买入成本共同决定，不等于区间涨幅。"}</p>
               <p className="inline-flex items-start gap-2 text-sm leading-6 text-muted-foreground"><CalendarDays className="mt-1 size-4 shrink-0" />{activeMode === "single" ? "买入时点会影响短期结果，因此不能用十天表现预测未来。" : "低价时会买到更多份额，但定投仍然不能消除亏损风险。"}</p>
+            </div>
+
+            <div id="daily-observations" className="mt-5 border-t border-border/75 pt-5">
+              <div className="flex items-center justify-between gap-4">
+                <div><p className="text-sm font-medium">每日观察记录</p><p className="mt-1 text-xs text-muted-foreground">曲线看趋势，明细用来核对每天发生了什么。</p></div>
+                <Button onClick={() => setShowAllRecords((current) => !current)} size="sm" variant="ghost">{showAllRecords ? "收起" : "查看全部 10 天"}</Button>
+              </div>
+
+              <div className="mt-4 overflow-hidden rounded-lg border border-border/75">
+                <div className="hidden grid-cols-[72px_1fr_1fr_1fr_1fr] gap-3 border-b border-border/70 bg-secondary/45 px-4 py-2 text-xs text-muted-foreground sm:grid">
+                  <span>日期</span><span>模拟价格</span><span>累计投入</span><span>模拟市值</span><span className="text-right">累计收益率</span>
+                </div>
+                {visibleRecords.map((record) => (
+                  <div key={record.date} className="grid grid-cols-[44px_1fr_1fr_auto] items-center gap-2 border-t border-border/70 px-3 py-3 first:border-t-0 sm:grid-cols-[72px_1fr_1fr_1fr_1fr] sm:gap-3 sm:px-4">
+                    <span className="text-sm font-medium">{record.date}</span>
+                    <span className="hidden text-sm text-muted-foreground sm:block">{record.price.toFixed(activeAsset.id === "bond-index" ? 3 : 2)}</span>
+                    <span><span className="block text-xs text-muted-foreground sm:hidden">累计投入</span><span className="text-sm tabular-nums">¥{record.invested.toFixed(0)}</span></span>
+                    <span><span className="block text-xs text-muted-foreground sm:hidden">市值 / 收益</span><span className="text-sm tabular-nums">¥{record.value.toFixed(2)}</span></span>
+                    <span className={cn("text-right text-sm font-medium tabular-nums", record.returnRate >= 0 ? "text-positive" : "text-negative")}>{record.returnRate >= 0 ? "+" : ""}{record.returnRate.toFixed(2)}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
