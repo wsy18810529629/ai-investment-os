@@ -140,6 +140,15 @@ export function InvestmentSimulator() {
   const latest = records[records.length - 1];
   const maxDrawdown = calculateMaxDrawdown(activeAsset.prices);
   const isPositive = latest.returnRate >= 0;
+  const baselineAsset = simulationAssets.find((asset) => asset.id === "growth-stock") ?? simulationAssets[0];
+  const baselineRecords = useMemo(() => buildSimulation("growth-stock", latest.invested, "single"), [latest.invested]);
+  const baselineLatest = baselineRecords[baselineRecords.length - 1];
+  const baselineDrawdown = calculateMaxDrawdown(baselineAsset.prices);
+  const returnAdvantage = latest.returnRate - baselineLatest.returnRate;
+  const valueAdvantage = latest.value - baselineLatest.value;
+  const drawdownImprovement = maxDrawdown - baselineDrawdown;
+  const meaningfullyAhead = valueAdvantage > 0.01;
+  const meaningfullyBehind = valueAdvantage < -0.01;
 
   function startSimulation() {
     const amount = Math.min(10000, Math.max(10, Math.round(draftAmount || 10)));
@@ -306,6 +315,38 @@ export function InvestmentSimulator() {
         </Card>
       ) : null}
 
+      {savedState.active && savedState.reflection ? (
+        <Card className="mt-4 border-ai/20 bg-card/95">
+          <CardContent className="p-5 lg:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-medium text-ai-foreground">成长如何影响模拟收益</p>
+                <h4 className="mt-2 text-xl font-semibold">研究方案与冲动基线的收益归因</h4>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">使用相同模拟本金和同一段行情，对比你的方案与“未经研究、一次性追逐热门股票”的假设基线。</p>
+              </div>
+              <Badge variant={meaningfullyAhead ? "positive" : "warning"}>{meaningfullyAhead ? "研究方案领先" : meaningfullyBehind ? "基线暂时领先" : "结果暂时相同"}</Badge>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <ComparisonMetric label="收益率差" value={`${returnAdvantage >= 0 ? "+" : ""}${returnAdvantage.toFixed(2)} 个百分点`} positive={returnAdvantage >= 0} />
+              <ComparisonMetric label="模拟收益贡献" value={`${valueAdvantage >= 0 ? "+" : "-"}¥${Math.abs(valueAdvantage).toFixed(2)}`} positive={valueAdvantage >= 0} />
+              <ComparisonMetric label="最大回撤改善" value={`${drawdownImprovement >= 0 ? "+" : ""}${drawdownImprovement.toFixed(2)} 个百分点`} positive={drawdownImprovement >= 0} />
+            </div>
+
+            <div className="mt-4 rounded-lg border border-border/70 bg-secondary/35 p-4">
+              <p className="text-sm font-medium">本次成长结果</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {meaningfullyAhead
+                  ? `你的研究方案在这段 Mock 行情中比冲动基线多保留 ¥${valueAdvantage.toFixed(2)}，同时${drawdownImprovement >= 0 ? "降低了回撤" : "承受了更大回撤"}。`
+                  : meaningfullyBehind
+                    ? `你的研究方案在这段 Mock 行情中少获得 ¥${Math.abs(valueAdvantage).toFixed(2)}；这说明更完整的研究不保证每段行情都跑赢，但能让结果和风险被解释。`
+                    : "当前方案与冲动基线相同，因此没有产生收益差异。尝试不同资产或投入方式，才能观察研究决策如何改变结果。"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="mt-3 max-w-xl"><RiskDisclaimer compact /></div>
     </section>
   );
@@ -313,4 +354,8 @@ export function InvestmentSimulator() {
 
 function Metric({ label, value, tone }: { label: string; value: string; tone?: "positive" | "negative" }) {
   return <div className="px-3 first:pl-0 last:pr-0"><p className="text-xs text-muted-foreground">{label}</p><p className={cn("mt-1 text-lg font-semibold tabular-nums sm:text-xl", tone === "positive" && "text-positive", tone === "negative" && "text-negative")}>{value}</p></div>;
+}
+
+function ComparisonMetric({ label, value, positive }: { label: string; value: string; positive: boolean }) {
+  return <div className="rounded-lg border border-border/70 bg-secondary/30 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className={cn("mt-2 text-lg font-semibold tabular-nums", positive ? "text-positive" : "text-negative")}>{value}</p></div>;
 }
