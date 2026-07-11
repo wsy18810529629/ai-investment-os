@@ -91,26 +91,7 @@ export function TodayBrief() {
         </motion.aside>
       </div>
 
-      <div className="mt-6 hidden border-y border-border/80 md:grid md:grid-cols-3 md:divide-x md:divide-border/80">
-        {todayBrief.summary.map((item, index) => (
-          <motion.article
-            key={item.title}
-            variants={fadeUp}
-            transition={{ ...calmTransition, delay: index * 0.03 }}
-            className="px-5 py-3 first:pl-0 last:pr-0"
-          >
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 font-mono text-xs text-primary">0{index + 1}</span>
-              <div>
-                <h3 className="text-sm font-semibold leading-5">{item.title}</h3>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.affectedAreas.join(" / ")}</p>
-              </div>
-            </div>
-          </motion.article>
-        ))}
-      </div>
-
-      <div className="mt-4 max-w-xl">
+      <div className="mt-6 max-w-xl">
         <RiskDisclaimer compact />
       </div>
     </motion.section>
