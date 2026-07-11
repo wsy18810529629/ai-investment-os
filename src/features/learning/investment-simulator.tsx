@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { RiskDisclaimer } from "@/components/home/risk-disclaimer";
-import { simulationAssets, simulationDates } from "./learning-data";
+import { simulationAssets } from "./learning-data";
 
 const SIMULATOR_KEY = "investment-os-paper-investing";
 const SIMULATOR_EVENT = "investment-os-paper-investing-change";
-const DEFAULT_SIMULATOR = JSON.stringify({ active: false, mode: "single", assetId: "growth-stock", amount: 1000, startedAt: "", reflection: "" });
+const DEFAULT_SIMULATOR = JSON.stringify({ active: false, mode: "single", assetId: "growth-stock", amount: 1000, startedAt: "", observedDays: 1, reflection: "" });
 
 type SimulationMode = "single" | "recurring";
 
@@ -23,6 +23,7 @@ type SimulatorState = {
   assetId: string;
   amount: number;
   startedAt: string;
+  observedDays: number;
   reflection: string;
 };
 
@@ -59,13 +60,15 @@ function parseState(snapshot: string): SimulatorState {
     const state = JSON.parse(snapshot) as SimulatorState;
     if (typeof state.active !== "boolean") throw new Error("Invalid simulator state");
     const legacyState = state as SimulatorState & { dailyAmount?: number };
+    const hasForwardObservationState = typeof state.observedDays === "number";
     return {
-      active: state.active,
+      active: hasForwardObservationState ? state.active : false,
       mode: state.mode === "single" ? "single" : "recurring",
       assetId: state.assetId || "growth-stock",
       amount: typeof state.amount === "number" ? state.amount : legacyState.dailyAmount ?? 1000,
-      startedAt: state.startedAt || "",
-      reflection: typeof state.reflection === "string" ? state.reflection : "",
+      startedAt: hasForwardObservationState ? state.startedAt || "" : "",
+      observedDays: hasForwardObservationState ? Math.min(10, Math.max(1, state.observedDays)) : 1,
+      reflection: hasForwardObservationState && typeof state.reflection === "string" ? state.reflection : "",
     };
   } catch {
     return JSON.parse(DEFAULT_SIMULATOR) as SimulatorState;
@@ -86,22 +89,42 @@ function getLocationSnapshot() {
   return window.location.search;
 }
 
-function buildSimulation(assetId: string, amount: number, mode: SimulationMode) {
+function getLocalDateKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function buildSimulation(assetId: string, amount: number, mode: SimulationMode, observedDays: number, startedAt: string) {
   const asset = simulationAssets.find((item) => item.id === assetId) ?? simulationAssets[0];
   let units = 0;
 
-  return asset.prices.map((price, index) => {
+  return asset.prices.slice(0, observedDays).map((price, index) => {
     if (mode === "recurring" || index === 0) units += amount / price;
     const invested = mode === "recurring" ? amount * (index + 1) : amount;
     const value = units * price;
+    const rawReturnRate = ((value / invested) - 1) * 100;
+    const observationDate = new Date(`${startedAt || "2026-07-11"}T00:00:00`);
+    observationDate.setDate(observationDate.getDate() + index);
     return {
-      date: simulationDates[index],
+      date: `${observationDate.getMonth() + 1}/${observationDate.getDate()}`,
       price,
       invested,
       value,
-      returnRate: ((value / invested) - 1) * 100,
+      returnRate: Math.abs(rawReturnRate) < 0.005 ? 0 : rawReturnRate,
     };
   });
+}
+
+function getObservedDayCount(state: SimulatorState) {
+  if (!state.active || !state.startedAt) return 1;
+  const started = new Date(`${state.startedAt}T00:00:00`).getTime();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const calendarDays = Math.floor((today.getTime() - started) / 86_400_000) + 1;
+  return Math.min(10, Math.max(state.observedDays, calendarDays, 1));
 }
 
 function calculateMaxDrawdown(prices: number[]) {
@@ -138,14 +161,16 @@ export function InvestmentSimulator() {
   const activeAssetId = savedState.active ? savedState.assetId : draftAssetId;
   const activeAmount = savedState.active ? savedState.amount : draftAmount;
   const activeAsset = simulationAssets.find((item) => item.id === activeAssetId) ?? simulationAssets[0];
-  const records = useMemo(() => buildSimulation(activeAssetId, activeAmount, activeMode), [activeAssetId, activeAmount, activeMode]);
+  const observedDayCount = getObservedDayCount(savedState);
+  const simulationStartDate = savedState.active ? savedState.startedAt : "2026-07-11";
+  const records = useMemo(() => buildSimulation(activeAssetId, activeAmount, activeMode, observedDayCount, simulationStartDate), [activeAssetId, activeAmount, activeMode, observedDayCount, simulationStartDate]);
   const latest = records[records.length - 1];
-  const maxDrawdown = calculateMaxDrawdown(activeAsset.prices);
+  const maxDrawdown = calculateMaxDrawdown(activeAsset.prices.slice(0, observedDayCount));
   const isPositive = latest.returnRate >= 0;
   const baselineAsset = simulationAssets.find((asset) => asset.id === "growth-stock") ?? simulationAssets[0];
-  const baselineRecords = useMemo(() => buildSimulation("growth-stock", latest.invested, "single"), [latest.invested]);
+  const baselineRecords = useMemo(() => buildSimulation("growth-stock", latest.invested, "single", observedDayCount, simulationStartDate), [latest.invested, observedDayCount, simulationStartDate]);
   const baselineLatest = baselineRecords[baselineRecords.length - 1];
-  const baselineDrawdown = calculateMaxDrawdown(baselineAsset.prices);
+  const baselineDrawdown = calculateMaxDrawdown(baselineAsset.prices.slice(0, observedDayCount));
   const returnAdvantage = latest.returnRate - baselineLatest.returnRate;
   const valueAdvantage = latest.value - baselineLatest.value;
   const drawdownImprovement = maxDrawdown - baselineDrawdown;
@@ -156,7 +181,7 @@ export function InvestmentSimulator() {
   function startSimulation() {
     const amount = Math.min(10000, Math.max(10, Math.round(draftAmount || 10)));
     setDraftAmount(amount);
-    saveState({ active: true, mode: draftMode, assetId: draftAssetId, amount, startedAt: "2026-07-01", reflection: "" });
+    saveState({ active: true, mode: draftMode, assetId: draftAssetId, amount, startedAt: getLocalDateKey(), observedDays: 1, reflection: "" });
   }
 
   function resetSimulation() {
@@ -168,11 +193,16 @@ export function InvestmentSimulator() {
     setDraftMode("single");
     setDraftAssetId(researchIntent.assetId);
     setDraftAmount(1000);
-    saveState({ active: false, mode: "single", assetId: researchIntent.assetId, amount: 1000, startedAt: "", reflection: "" });
+    saveState({ active: false, mode: "single", assetId: researchIntent.assetId, amount: 1000, startedAt: "", observedDays: 1, reflection: "" });
   }
 
   function completeReflection(reflection: string) {
     saveState({ ...savedState, reflection });
+  }
+
+  function advanceMockDay() {
+    saveState({ ...savedState, observedDays: Math.min(10, observedDayCount + 1), reflection: "" });
+    setShowAllRecords(false);
   }
 
   return (
@@ -249,14 +279,14 @@ export function InvestmentSimulator() {
         <Card className="soft-panel">
           <CardContent className="p-5 lg:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div><p className="text-xs text-muted-foreground">{activeAsset.name} · {activeMode === "single" ? "一次买入" : "每日定投"} · 10 个观察日</p><h4 className="mt-2 text-xl font-semibold">投入之后，收益不会直线上升</h4></div>
+              <div><p className="text-xs text-muted-foreground">{activeAsset.name} · {activeMode === "single" ? "一次买入" : "每日定投"} · 已观察 {records.length} / 10 天</p><h4 className="mt-2 text-xl font-semibold">投入之后，收益不会直线上升</h4></div>
               <Badge variant="neutral">固定 Mock 行情</Badge>
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-y-4 border-y border-border/75 py-3 sm:grid-cols-4 sm:divide-x sm:gap-y-0">
               <Metric label="累计投入" value={`¥${latest.invested.toFixed(0)}`} />
               <Metric label="模拟市值" value={`¥${latest.value.toFixed(2)}`} />
-              <Metric label="累计收益率" value={`${isPositive ? "+" : ""}${latest.returnRate.toFixed(2)}%`} tone={isPositive ? "positive" : "negative"} />
+              <Metric label="累计收益率" value={`${latest.returnRate > 0 ? "+" : ""}${latest.returnRate.toFixed(2)}%`} tone={isPositive ? "positive" : "negative"} />
               <Metric label="最大回撤" value={`${maxDrawdown.toFixed(2)}%`} tone="negative" />
             </div>
 
@@ -268,7 +298,7 @@ export function InvestmentSimulator() {
                   <XAxis axisLine={false} dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickLine={false} />
                   <YAxis axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickFormatter={(value) => `${value}%`} tickLine={false} />
                   <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} formatter={(value) => [`${Number(value).toFixed(2)}%`, "累计收益率"]} />
-                  <Area dataKey="returnRate" fill="url(#paperReturnFill)" stroke="hsl(var(--primary))" strokeWidth={2.25} type="monotone" />
+                  <Area dataKey="returnRate" dot={{ r: 3, fill: "hsl(var(--primary))" }} fill="url(#paperReturnFill)" stroke="hsl(var(--primary))" strokeWidth={2.25} type="monotone" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -280,8 +310,8 @@ export function InvestmentSimulator() {
 
             <div id="daily-observations" className="mt-5 border-t border-border/75 pt-5">
               <div className="flex items-center justify-between gap-4">
-                <div><p className="text-sm font-medium">每日观察记录</p><p className="mt-1 text-xs text-muted-foreground">曲线看趋势，明细用来核对每天发生了什么。</p></div>
-                <Button onClick={() => setShowAllRecords((current) => !current)} size="sm" variant="ghost">{showAllRecords ? "收起" : "查看全部 10 天"}</Button>
+                <div><p className="text-sm font-medium">每日观察记录</p><p className="mt-1 text-xs text-muted-foreground">已记录 {records.length} / 10 天，未来结果会逐日出现。</p></div>
+                {records.length > 4 ? <Button onClick={() => setShowAllRecords((current) => !current)} size="sm" variant="ghost">{showAllRecords ? "收起" : `查看全部 ${records.length} 天`}</Button> : null}
               </div>
 
               <div className="mt-4 overflow-hidden rounded-lg border border-border/75">
@@ -294,10 +324,16 @@ export function InvestmentSimulator() {
                     <span className="hidden text-sm text-muted-foreground sm:block">{record.price.toFixed(activeAsset.id === "bond-index" ? 3 : 2)}</span>
                     <span><span className="block text-xs text-muted-foreground sm:hidden">累计投入</span><span className="text-sm tabular-nums">¥{record.invested.toFixed(0)}</span></span>
                     <span><span className="block text-xs text-muted-foreground sm:hidden">市值 / 收益</span><span className="text-sm tabular-nums">¥{record.value.toFixed(2)}</span></span>
-                    <span className={cn("text-right text-sm font-medium tabular-nums", record.returnRate >= 0 ? "text-positive" : "text-negative")}>{record.returnRate >= 0 ? "+" : ""}{record.returnRate.toFixed(2)}%</span>
+                    <span className={cn("text-right text-sm font-medium tabular-nums", record.returnRate >= 0 ? "text-positive" : "text-negative")}>{record.returnRate > 0 ? "+" : ""}{record.returnRate.toFixed(2)}%</span>
                   </div>
                 ))}
               </div>
+              {savedState.active && observedDayCount < 10 ? (
+                <div className="mt-3 flex flex-col gap-3 rounded-lg border border-ai/20 bg-ai-soft/40 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs leading-5 text-muted-foreground">真实产品会在下一个观察日自动更新。当前 Mock 模式可手动推进，用于体验未来收益如何逐日形成。</p>
+                  <Button className="shrink-0" onClick={advanceMockDay} size="sm" variant="secondary">模拟推进一天</Button>
+                </div>
+              ) : null}
             </div>
           </CardContent>
         </Card>
@@ -324,6 +360,11 @@ export function InvestmentSimulator() {
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">本次收获：{savedState.reflection}</p>
                   <p className="mt-2 text-xs leading-5 text-muted-foreground">你不只是看完了信息，还形成假设、运行模拟并留下了可复用的判断。</p>
                 </motion.div>
+              ) : observedDayCount === 1 ? (
+                <div className="rounded-lg border border-ai/20 bg-ai-soft/40 p-4">
+                  <p className="font-medium text-ai-foreground">等待第一个未来观察结果</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">买入日收益从 0.00% 开始。下一观察日出现后，再根据真实变化完成复盘。</p>
+                </div>
               ) : (
                 <div>
                   <p className="text-sm font-medium">这次实验最值得记住什么？</p>
