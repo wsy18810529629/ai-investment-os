@@ -228,7 +228,7 @@ export function InvestmentSimulator() {
             <label className="mt-6 block text-sm font-medium" htmlFor="simulation-amount">3. {activeMode === "single" ? "模拟买入金额" : "每日模拟投入"}</label>
             <div className="mt-3 flex h-11 items-center rounded-lg border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-ring">
               <span className="text-sm text-muted-foreground">¥</span>
-              <input id="simulation-amount" min={10} max={10000} step={10} disabled={savedState.active} value={activeAmount} onChange={(event) => setDraftAmount(Number(event.target.value))} className="h-full min-w-0 flex-1 bg-transparent px-2 text-base font-semibold outline-none disabled:cursor-default" type="number" />
+              <input id="simulation-amount" min={10} max={10000} step={10} disabled={savedState.active} value={activeAmount} onChange={(event) => setDraftAmount(Number(event.target.value))} className="finance-number-input h-full min-w-0 flex-1 px-2 text-base font-semibold outline-none disabled:cursor-default" style={{ appearance: "none", backgroundColor: "transparent", WebkitAppearance: "none" }} type="number" />
               <span className="text-xs text-muted-foreground">{activeMode === "single" ? "一次" : "每天"}</span>
             </div>
 

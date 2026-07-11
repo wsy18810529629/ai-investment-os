@@ -93,6 +93,22 @@
 }
 
 @layer utilities {
+  .finance-number-input {
+    appearance: textfield;
+    background-color: transparent !important;
+    color-scheme: light;
+  }
+
+  .finance-number-input::-webkit-inner-spin-button,
+  .finance-number-input::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  .dark .finance-number-input {
+    color-scheme: dark;
+  }
+
   .text-balance {
     text-wrap: balance;
   }
