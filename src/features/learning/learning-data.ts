@@ -115,11 +115,25 @@ export const simulationDates = ["7/1", "7/2", "7/3", "7/4", "7/5", "7/6", "7/7",
 
 export const simulationAssets: SimulationAsset[] = [
   {
+    id: "growth-stock",
+    name: "新能源龙头 A",
+    type: "股票 · Mock",
+    risk: "较高",
+    prices: [186, 181, 188, 179, 174, 182, 193, 189, 187, 190],
+  },
+  {
     id: "broad-etf",
     name: "沪深300 ETF",
     type: "宽基 ETF",
     risk: "中等",
     prices: [3.82, 3.79, 3.84, 3.81, 3.76, 3.8, 3.87, 3.85, 3.91, 3.94],
+  },
+  {
+    id: "active-fund",
+    name: "稳健成长混合基金",
+    type: "主动基金 · Mock",
+    risk: "中等",
+    prices: [1.42, 1.4, 1.43, 1.41, 1.38, 1.4, 1.45, 1.44, 1.47, 1.49],
   },
   {
     id: "dividend-etf",

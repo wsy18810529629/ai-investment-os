@@ -12,12 +12,15 @@ import { simulationAssets, simulationDates } from "./learning-data";
 
 const SIMULATOR_KEY = "investment-os-paper-investing";
 const SIMULATOR_EVENT = "investment-os-paper-investing-change";
-const DEFAULT_SIMULATOR = JSON.stringify({ active: false, assetId: "broad-etf", dailyAmount: 50, startedAt: "" });
+const DEFAULT_SIMULATOR = JSON.stringify({ active: false, mode: "single", assetId: "growth-stock", amount: 1000, startedAt: "" });
+
+type SimulationMode = "single" | "recurring";
 
 type SimulatorState = {
   active: boolean;
+  mode: SimulationMode;
   assetId: string;
-  dailyAmount: number;
+  amount: number;
   startedAt: string;
 };
 
@@ -37,8 +40,15 @@ function getSnapshot() {
 function parseState(snapshot: string): SimulatorState {
   try {
     const state = JSON.parse(snapshot) as SimulatorState;
-    if (typeof state.active !== "boolean" || typeof state.dailyAmount !== "number") throw new Error("Invalid simulator state");
-    return state;
+    if (typeof state.active !== "boolean") throw new Error("Invalid simulator state");
+    const legacyState = state as SimulatorState & { dailyAmount?: number };
+    return {
+      active: state.active,
+      mode: state.mode === "single" ? "single" : "recurring",
+      assetId: state.assetId || "growth-stock",
+      amount: typeof state.amount === "number" ? state.amount : legacyState.dailyAmount ?? 1000,
+      startedAt: state.startedAt || "",
+    };
   } catch {
     return JSON.parse(DEFAULT_SIMULATOR) as SimulatorState;
   }
@@ -49,13 +59,13 @@ function saveState(state: SimulatorState) {
   window.dispatchEvent(new Event(SIMULATOR_EVENT));
 }
 
-function buildSimulation(assetId: string, dailyAmount: number) {
+function buildSimulation(assetId: string, amount: number, mode: SimulationMode) {
   const asset = simulationAssets.find((item) => item.id === assetId) ?? simulationAssets[0];
   let units = 0;
 
   return asset.prices.map((price, index) => {
-    units += dailyAmount / price;
-    const invested = dailyAmount * (index + 1);
+    if (mode === "recurring" || index === 0) units += amount / price;
+    const invested = mode === "recurring" ? amount * (index + 1) : amount;
     const value = units * price;
     return {
       date: simulationDates[index],
@@ -73,20 +83,22 @@ function buildSimulation(assetId: string, dailyAmount: number) {
 export function InvestmentSimulator() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, () => DEFAULT_SIMULATOR);
   const savedState = useMemo(() => parseState(snapshot), [snapshot]);
+  const [draftMode, setDraftMode] = useState<SimulationMode>(savedState.mode);
   const [draftAssetId, setDraftAssetId] = useState(savedState.assetId);
-  const [draftAmount, setDraftAmount] = useState(savedState.dailyAmount);
+  const [draftAmount, setDraftAmount] = useState(savedState.amount);
 
+  const activeMode = savedState.active ? savedState.mode : draftMode;
   const activeAssetId = savedState.active ? savedState.assetId : draftAssetId;
-  const activeAmount = savedState.active ? savedState.dailyAmount : draftAmount;
+  const activeAmount = savedState.active ? savedState.amount : draftAmount;
   const activeAsset = simulationAssets.find((item) => item.id === activeAssetId) ?? simulationAssets[0];
-  const records = useMemo(() => buildSimulation(activeAssetId, activeAmount), [activeAssetId, activeAmount]);
+  const records = useMemo(() => buildSimulation(activeAssetId, activeAmount, activeMode), [activeAssetId, activeAmount, activeMode]);
   const latest = records[records.length - 1];
   const isPositive = latest.returnRate >= 0;
 
   function startSimulation() {
     const amount = Math.min(10000, Math.max(10, Math.round(draftAmount || 10)));
     setDraftAmount(amount);
-    saveState({ active: true, assetId: draftAssetId, dailyAmount: amount, startedAt: "2026-07-01" });
+    saveState({ active: true, mode: draftMode, assetId: draftAssetId, amount, startedAt: "2026-07-01" });
   }
 
   function resetSimulation() {
@@ -98,8 +110,8 @@ export function InvestmentSimulator() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="inline-flex items-center gap-2 text-xs font-medium text-primary"><FlaskConical className="size-4" />动手实操 · Mock</p>
-          <h3 className="mt-2 text-2xl font-semibold">纸上定投实验</h3>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">设定每天投入的金额，观察累计投入、模拟市值和收益率如何随行情变化。</p>
+          <h3 className="mt-2 text-2xl font-semibold">纸上投资实验</h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">选择投入方式和投资类别，用模拟行情观察市值、成本与收益率每天如何变化。</p>
         </div>
         {savedState.active ? <Button onClick={resetSimulation} size="sm" variant="ghost"><RefreshCcw className="size-4" />调整实验</Button> : null}
       </div>
@@ -107,7 +119,19 @@ export function InvestmentSimulator() {
       <div className="mt-5 grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         <Card>
           <CardContent className="p-5 lg:p-6">
-            <p className="text-sm font-medium">1. 选择模拟标的</p>
+            <p className="text-sm font-medium">1. 选择投入方式</p>
+            <div className="mt-3 grid grid-cols-2 rounded-lg border border-border/75 bg-secondary/35 p-1">
+              {[
+                { id: "single" as const, label: "一次买入", hint: "买入后每日观察" },
+                { id: "recurring" as const, label: "每日定投", hint: "每天投入同样金额" },
+              ].map((mode) => (
+                <button key={mode.id} type="button" disabled={savedState.active} onClick={() => setDraftMode(mode.id)} className={cn("min-h-14 rounded-md px-2 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", activeMode === mode.id ? "bg-card text-foreground shadow-calm-sm" : "text-muted-foreground hover:text-foreground")}>
+                  <span className="block text-sm font-medium">{mode.label}</span><span className="mt-0.5 block text-[11px]">{mode.hint}</span>
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-6 text-sm font-medium">2. 选择投资类别</p>
             <div className="mt-3 grid gap-2">
               {simulationAssets.map((asset) => (
                 <button
@@ -123,20 +147,20 @@ export function InvestmentSimulator() {
               ))}
             </div>
 
-            <label className="mt-6 block text-sm font-medium" htmlFor="daily-investment">2. 每日模拟投入</label>
+            <label className="mt-6 block text-sm font-medium" htmlFor="simulation-amount">3. {activeMode === "single" ? "模拟买入金额" : "每日模拟投入"}</label>
             <div className="mt-3 flex h-11 items-center rounded-lg border border-input bg-card px-3 focus-within:ring-2 focus-within:ring-ring">
               <span className="text-sm text-muted-foreground">¥</span>
-              <input id="daily-investment" min={10} max={10000} step={10} disabled={savedState.active} value={activeAmount} onChange={(event) => setDraftAmount(Number(event.target.value))} className="h-full min-w-0 flex-1 bg-transparent px-2 text-base font-semibold outline-none disabled:cursor-default" type="number" />
-              <span className="text-xs text-muted-foreground">每天</span>
+              <input id="simulation-amount" min={10} max={10000} step={10} disabled={savedState.active} value={activeAmount} onChange={(event) => setDraftAmount(Number(event.target.value))} className="h-full min-w-0 flex-1 bg-transparent px-2 text-base font-semibold outline-none disabled:cursor-default" type="number" />
+              <span className="text-xs text-muted-foreground">{activeMode === "single" ? "一次" : "每天"}</span>
             </div>
 
             {savedState.active ? (
               <div className="mt-5 rounded-lg border border-positive/20 bg-positive-soft/45 p-4" role="status">
                 <p className="font-medium text-positive">实验记录中</p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">从 7 月 1 日开始，已模拟记录 {records.length} 个观察日。</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">{activeMode === "single" ? "已完成一次模拟买入" : "正在模拟每日定投"}，累计记录 {records.length} 个观察日。</p>
               </div>
             ) : (
-              <Button className="mt-5 w-full" onClick={startSimulation} variant="primary"><CircleDollarSign className="size-4" />开始模拟定投</Button>
+              <Button className="mt-5 w-full" onClick={startSimulation} variant="primary"><CircleDollarSign className="size-4" />开始纸上投资</Button>
             )}
           </CardContent>
         </Card>
@@ -144,7 +168,7 @@ export function InvestmentSimulator() {
         <Card className="soft-panel">
           <CardContent className="p-5 lg:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div><p className="text-xs text-muted-foreground">{activeAsset.name} · 10 个观察日</p><h4 className="mt-2 text-xl font-semibold">定投过程中，收益不会直线上升</h4></div>
+              <div><p className="text-xs text-muted-foreground">{activeAsset.name} · {activeMode === "single" ? "一次买入" : "每日定投"} · 10 个观察日</p><h4 className="mt-2 text-xl font-semibold">投入之后，收益不会直线上升</h4></div>
               <Badge variant="neutral">固定 Mock 行情</Badge>
             </div>
 
@@ -168,8 +192,8 @@ export function InvestmentSimulator() {
             </div>
 
             <div className="grid gap-2 border-t border-border/75 pt-4 sm:grid-cols-2">
-              <p className="inline-flex items-start gap-2 text-sm leading-6"><TrendingUp className="mt-1 size-4 shrink-0 text-primary" />收益率由每次投入价格共同决定，不等于标的从第一天到今天的涨幅。</p>
-              <p className="inline-flex items-start gap-2 text-sm leading-6 text-muted-foreground"><CalendarDays className="mt-1 size-4 shrink-0" />固定金额在价格较低时会买到更多份额，但不能消除亏损风险。</p>
+              <p className="inline-flex items-start gap-2 text-sm leading-6"><TrendingUp className="mt-1 size-4 shrink-0 text-primary" />{activeMode === "single" ? "一次买入后，收益完全跟随买入价格之后的涨跌。" : "定投收益由多次买入成本共同决定，不等于区间涨幅。"}</p>
+              <p className="inline-flex items-start gap-2 text-sm leading-6 text-muted-foreground"><CalendarDays className="mt-1 size-4 shrink-0" />{activeMode === "single" ? "买入时点会影响短期结果，因此不能用十天表现预测未来。" : "低价时会买到更多份额，但定投仍然不能消除亏损风险。"}</p>
             </div>
           </CardContent>
         </Card>
