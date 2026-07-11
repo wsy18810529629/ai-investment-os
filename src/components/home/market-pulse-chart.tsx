@@ -4,10 +4,10 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { marketPulse } from "@/data/home";
 
 /**
- * MarketPulseChart gives the Today Brief a professional but non-trading visual anchor.
- * It uses sentiment and liquidity instead of price candles because the homepage is about understanding market context.
+ * The Dashboard uses one sentiment line for immediate understanding. Market
+ * Intelligence can opt into liquidity comparison when the relationship matters.
  */
-export function MarketPulseChart() {
+export function MarketPulseChart({ showLiquidity = true }: { showLiquidity?: boolean }) {
   return (
     <div className="hidden h-56 w-full sm:block lg:h-60">
       <ResponsiveContainer width="100%" height="100%">
@@ -41,14 +41,16 @@ export function MarketPulseChart() {
             }}
             formatter={(value, name) => [value, name === "sentiment" ? "市场情绪" : "流动性"]}
           />
-          <Area
-            dataKey="liquidity"
-            fill="transparent"
-            name="流动性"
-            stroke="hsl(var(--muted-foreground))"
-            strokeWidth={1.5}
-            type="monotone"
-          />
+          {showLiquidity ? (
+            <Area
+              dataKey="liquidity"
+              fill="transparent"
+              name="流动性"
+              stroke="hsl(var(--muted-foreground))"
+              strokeWidth={1.5}
+              type="monotone"
+            />
+          ) : null}
           <Area
             dataKey="sentiment"
             fill="url(#sentimentFill)"

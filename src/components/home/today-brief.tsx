@@ -72,7 +72,7 @@ export function TodayBrief() {
           </div>
 
           <div className="hidden lg:block">
-            <MarketPulseChart />
+            <MarketPulseChart showLiquidity={false} />
           </div>
 
           <div className="mt-4 grid grid-cols-3 divide-x divide-border/80 border-y border-border/80 lg:mt-0">

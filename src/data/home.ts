@@ -78,7 +78,7 @@ export type DigestItem = {
 
 export const todayBrief = {
   dateLabel: "7月10日 · 周五",
-  greeting: "每日投资工作台",
+  greeting: "今日判断",
   mood: "谨慎中性" satisfies MarketMood,
   source: "市场行情、行业资讯、观察信号与学习上下文",
   updatedAt: "2026-07-10 09:30",
