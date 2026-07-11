@@ -1,6 +1,6 @@
 "use client";
 
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { marketPulse } from "@/data/home";
 
 /**
@@ -31,6 +31,7 @@ export function MarketPulseChart({ showLiquidity = true }: { showLiquidity?: boo
             tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
             tickLine={false}
           />
+          {showLiquidity ? <Legend iconType="line" wrapperStyle={{ color: "hsl(var(--muted-foreground))", fontSize: 12 }} /> : null}
           <Tooltip
             contentStyle={{
               background: "hsl(var(--card))",

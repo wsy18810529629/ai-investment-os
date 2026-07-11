@@ -2,26 +2,23 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, BrainCircuit, Clock3, Database, LineChart, Radar, ShieldAlert } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, BookOpen, BrainCircuit, FlaskConical, LineChart, Radar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { hotSectors, researchPicks, todayBrief } from "@/data/home";
+import { hotSectors } from "@/data/home";
 import { calmTransition, fadeUp, staggerContainer } from "./motion-presets";
-import { RiskDisclaimer } from "./risk-disclaimer";
 import { SectionHeading } from "./section-heading";
 
 const supportingSignals = [
   {
-    label: "市场环境",
+    label: "市场背景",
     title: "风险偏好回升，但不足以支持追涨",
-    summary: "流动性保持稳定，接下来要观察上涨是否得到盈利预期支持。",
+    summary: "流动性保持稳定，接下来观察上涨是否得到盈利预期支持。",
     href: "/market",
-    action: "查看市场变化",
+    action: "理解市场变化",
     icon: LineChart,
   },
   {
-    label: "资金方向",
+    label: "行业背景",
     title: `${hotSectors[0].name} 仍是主线，拥挤度成为新变量`,
     summary: "产业景气仍在，但高估值让业绩验证变得更重要。",
     href: "/industry",
@@ -30,69 +27,38 @@ const supportingSignals = [
   },
 ] as const;
 
+const researchPath = [
+  { label: "市场", description: "判断环境", href: "/market", icon: LineChart },
+  { label: "行业", description: "找到资金方向", href: "/industry", icon: Radar },
+  { label: "AI 投研", description: "检查正反证据", href: "/ai-research", icon: BrainCircuit },
+  { label: "学习", description: "补足关键概念", href: "/learning", icon: BookOpen },
+  { label: "纸上验证", description: "观察收益与回撤", href: "/learning?practice=growth-stock&source=ai-research#paper-investing", icon: FlaskConical },
+] as const;
+
 /**
- * One primary signal establishes today's research priority. Supporting signals
- * stay compact so the Dashboard makes a decision about importance for the user.
+ * Supporting evidence remains brief while the path explains how every MVP
+ * module contributes to one complete daily research loop.
  */
 export function DashboardDecisionFlow() {
-  const primaryResearch = researchPicks[0];
-
   return (
     <motion.section variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }}>
       <motion.div variants={fadeUp} transition={calmTransition}>
-        <SectionHeading
-          eyebrow="今日重点"
-          title="先研究这一件事"
-          description="今天不需要追完所有变化。先判断上涨背后的预期，是否能被真实增长验证。"
-        />
+        <SectionHeading eyebrow="研究路径" title="从背景到验证，一步一步完成" description="今日页负责安排顺序；市场、行业、AI 投研、学习和纸上实验各自完成一件事。" />
       </motion.div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
-        <motion.div variants={fadeUp} transition={calmTransition}>
-          <Card className="h-full border-primary/20 bg-card/95">
-            <CardContent className="flex h-full flex-col p-5 lg:min-h-[390px] lg:p-7">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <Badge variant="neutral"><BrainCircuit className="mr-1 size-3.5 text-ai-foreground" />首要研究</Badge>
-                <span className="text-xs text-muted-foreground">AI 置信度 {primaryResearch.confidence}%</span>
-              </div>
-
-              <h3 className="mt-6 max-w-2xl text-2xl font-semibold leading-8 lg:text-[30px] lg:leading-10">
-                AI 算力的高预期，能否继续被订单与利润验证？
-              </h3>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
-                产业趋势仍强，但市场已经计入较乐观的增长假设。今天更值得核对订单兑现、毛利率和主题拥挤度，而不是只看涨幅。
-              </p>
-
-              <div className="mt-6 rounded-lg border border-negative/15 bg-negative-soft/45 p-4">
-                <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-negative"><ShieldAlert className="size-3.5" />反方风险</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{primaryResearch.counterRisk}</p>
-              </div>
-
-              <div className="mt-auto flex flex-col gap-4 pt-6 sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5"><Database className="size-3.5" />市场行情、行业资讯</span>
-                  <span className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" />更新 {todayBrief.updatedAt}</span>
-                </div>
-                <Button asChild className="shrink-0" variant="primary">
-                  <Link href="/ai-research">查看完整研究<ArrowRight className="size-4" /></Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.86fr)_minmax(420px,1.14fr)]">
         <div className="grid gap-4">
           {supportingSignals.map((signal, index) => {
             const Icon = signal.icon;
             return (
-              <motion.div key={signal.label} variants={fadeUp} transition={{ ...calmTransition, delay: 0.04 + index * 0.04 }}>
-                <Link className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" href={signal.href}>
-                  <Card className="h-full transition-[border-color,transform] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/25">
-                    <CardContent className="flex h-full min-h-[124px] flex-col p-4 sm:min-h-[150px] sm:p-5">
+              <motion.div key={signal.label} variants={fadeUp} transition={{ ...calmTransition, delay: index * 0.04 }}>
+                <Link className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" href={signal.href}>
+                  <Card className="transition-[border-color,transform] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/25">
+                    <CardContent className="p-5">
                       <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground"><Icon className="size-4 text-primary" />{signal.label}</span>
-                      <h3 className="mt-3 text-lg font-semibold leading-6 sm:mt-4">{signal.title}</h3>
-                      <p className="mt-2 hidden text-sm leading-6 text-muted-foreground sm:block">{signal.summary}</p>
-                      <span className="mt-auto inline-flex items-center gap-2 pt-3 text-sm font-medium group-hover:text-primary sm:pt-4">{signal.action}<ArrowRight className="size-4" /></span>
+                      <h3 className="mt-3 text-lg font-semibold leading-6">{signal.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{signal.summary}</p>
+                      <span className="mt-4 inline-flex items-center gap-2 text-sm font-medium group-hover:text-primary">{signal.action}<ArrowRight className="size-4" /></span>
                     </CardContent>
                   </Card>
                 </Link>
@@ -100,9 +66,28 @@ export function DashboardDecisionFlow() {
             );
           })}
         </div>
-      </div>
 
-      <div className="mt-3 max-w-xl"><RiskDisclaimer compact /></div>
+        <motion.div variants={fadeUp} transition={calmTransition}>
+          <Card className="h-full bg-card/85">
+            <CardContent className="p-5 lg:p-6">
+              <div className="flex items-end justify-between gap-4"><div><p className="text-xs font-medium text-primary">今天怎么走</p><h3 className="mt-2 text-xl font-semibold">完成一次研究闭环</h3></div><span className="text-xs text-muted-foreground">约 20 分钟</span></div>
+              <div className="mt-5 overflow-hidden rounded-lg border border-border/75">
+                {researchPath.map((step, index) => {
+                  const Icon = step.icon;
+                  return (
+                    <Link key={step.label} href={step.href} className="group flex min-h-14 items-center gap-3 border-t border-border/70 px-4 py-3 first:border-t-0 hover:bg-secondary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
+                      <span className="font-mono text-xs text-muted-foreground">0{index + 1}</span>
+                      <span className="grid size-8 shrink-0 place-items-center rounded-md border border-border/75 bg-secondary/45 text-primary"><Icon className="size-4" /></span>
+                      <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{step.label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{step.description}</span></span>
+                      <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </Link>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </motion.section>
   );
 }
