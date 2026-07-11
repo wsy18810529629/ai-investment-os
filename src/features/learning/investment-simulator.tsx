@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore } from "react";
+import { motion } from "framer-motion";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CalendarDays, CircleDollarSign, FlaskConical, RefreshCcw, TrendingUp } from "lucide-react";
+import { Award, CalendarDays, Check, CircleDollarSign, FlaskConical, RefreshCcw, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { simulationAssets, simulationDates } from "./learning-data";
 
 const SIMULATOR_KEY = "investment-os-paper-investing";
 const SIMULATOR_EVENT = "investment-os-paper-investing-change";
-const DEFAULT_SIMULATOR = JSON.stringify({ active: false, mode: "single", assetId: "growth-stock", amount: 1000, startedAt: "" });
+const DEFAULT_SIMULATOR = JSON.stringify({ active: false, mode: "single", assetId: "growth-stock", amount: 1000, startedAt: "", reflection: "" });
 
 type SimulationMode = "single" | "recurring";
 
@@ -22,6 +23,7 @@ type SimulatorState = {
   assetId: string;
   amount: number;
   startedAt: string;
+  reflection: string;
 };
 
 const researchContexts = {
@@ -63,6 +65,7 @@ function parseState(snapshot: string): SimulatorState {
       assetId: state.assetId || "growth-stock",
       amount: typeof state.amount === "number" ? state.amount : legacyState.dailyAmount ?? 1000,
       startedAt: state.startedAt || "",
+      reflection: typeof state.reflection === "string" ? state.reflection : "",
     };
   } catch {
     return JSON.parse(DEFAULT_SIMULATOR) as SimulatorState;
@@ -141,7 +144,7 @@ export function InvestmentSimulator() {
   function startSimulation() {
     const amount = Math.min(10000, Math.max(10, Math.round(draftAmount || 10)));
     setDraftAmount(amount);
-    saveState({ active: true, mode: draftMode, assetId: draftAssetId, amount, startedAt: "2026-07-01" });
+    saveState({ active: true, mode: draftMode, assetId: draftAssetId, amount, startedAt: "2026-07-01", reflection: "" });
   }
 
   function resetSimulation() {
@@ -153,7 +156,11 @@ export function InvestmentSimulator() {
     setDraftMode("single");
     setDraftAssetId(researchIntent.assetId);
     setDraftAmount(1000);
-    saveState({ active: false, mode: "single", assetId: researchIntent.assetId, amount: 1000, startedAt: "" });
+    saveState({ active: false, mode: "single", assetId: researchIntent.assetId, amount: 1000, startedAt: "", reflection: "" });
+  }
+
+  function completeReflection(reflection: string) {
+    saveState({ ...savedState, reflection });
   }
 
   return (
@@ -261,6 +268,43 @@ export function InvestmentSimulator() {
           </CardContent>
         </Card>
       </div>
+
+      {savedState.active ? (
+        <Card className="mt-4 border-primary/20">
+          <CardContent className="p-5 lg:p-6">
+            <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+              <div>
+                <p className="text-xs font-medium text-primary">今日研究进度</p>
+                <h4 className="mt-2 text-xl font-semibold">把信息变成一次完整验证</h4>
+                <div className="mt-5 grid grid-cols-4 gap-2" aria-label={savedState.reflection ? "研究闭环已完成" : "研究闭环完成三步，共四步"}>
+                  {["理解", "假设", "模拟", "复盘"].map((step, index) => {
+                    const complete = index < 3 || Boolean(savedState.reflection);
+                    return <div key={step} className="text-center"><span className={cn("mx-auto grid size-7 place-items-center rounded-full border text-xs", complete ? "border-primary/25 bg-positive-soft text-primary" : "border-border bg-secondary text-muted-foreground")}>{complete ? <Check className="size-3.5" /> : index + 1}</span><span className="mt-2 block text-xs text-muted-foreground">{step}</span></div>;
+                  })}
+                </div>
+              </div>
+
+              {savedState.reflection ? (
+                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-positive/20 bg-positive-soft/50 p-4" role="status">
+                  <p className="inline-flex items-center gap-2 font-semibold text-positive"><Award className="size-4" />你完成了一次完整研究闭环</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">本次收获：{savedState.reflection}</p>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">你不只是看完了信息，还形成假设、运行模拟并留下了可复用的判断。</p>
+                </motion.div>
+              ) : (
+                <div>
+                  <p className="text-sm font-medium">这次实验最值得记住什么？</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">选择最接近你真实感受的一项，完成今天的研究闭环。</p>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    {["收益比想象中更波动", "回撤和收益同样重要", "投入方式会改变结果"].map((reflection) => (
+                      <button key={reflection} type="button" onClick={() => completeReflection(reflection)} className="min-h-11 rounded-lg border border-border/75 bg-card px-3 py-2 text-left text-sm transition-colors hover:border-primary/30 hover:bg-secondary/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{reflection}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="mt-3 max-w-xl"><RiskDisclaimer compact /></div>
     </section>
