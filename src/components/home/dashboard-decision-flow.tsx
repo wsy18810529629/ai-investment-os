@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, BrainCircuit, Clock3, Database, LineChart, Radar } from "lucide-react";
+import { ArrowRight, BrainCircuit, Clock3, Database, LineChart, Radar, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,113 +11,98 @@ import { calmTransition, fadeUp, staggerContainer } from "./motion-presets";
 import { RiskDisclaimer } from "./risk-disclaimer";
 import { SectionHeading } from "./section-heading";
 
-const dailySignals = [
+const supportingSignals = [
   {
     label: "市场环境",
     title: "风险偏好回升，但不足以支持追涨",
-    summary: "流动性保持稳定，市场情绪较早盘改善；当前更重要的是观察上涨是否得到盈利预期支持。",
-    takeaway: "查看市场变化与宏观背景",
+    summary: "流动性保持稳定，接下来要观察上涨是否得到盈利预期支持。",
     href: "/market",
+    action: "查看市场变化",
     icon: LineChart,
   },
   {
     label: "资金方向",
     title: `${hotSectors[0].name} 仍是主线，拥挤度成为新变量`,
-    summary: hotSectors[0].driver,
-    takeaway: "查看资金流向与行业风险",
+    summary: "产业景气仍在，但高估值让业绩验证变得更重要。",
     href: "/industry",
+    action: "查看行业证据",
     icon: Radar,
-  },
-  {
-    label: "研究判断",
-    title: "今天更适合验证假设，而不是扩大仓位",
-    summary: researchPicks[0].reason,
-    takeaway: "查看完整证据与反方观点",
-    href: "/ai-research",
-    icon: BrainCircuit,
   },
 ] as const;
 
 /**
- * The Dashboard exposes only the conclusion of each research domain.
- * Each signal has one explicit destination so deeper evidence stays on its owning page.
+ * One primary signal establishes today's research priority. Supporting signals
+ * stay compact so the Dashboard makes a decision about importance for the user.
  */
 export function DashboardDecisionFlow() {
   const primaryResearch = researchPicks[0];
 
   return (
-    <motion.section
-      variants={staggerContainer}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
-    >
+    <motion.section variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }}>
       <motion.div variants={fadeUp} transition={calmTransition}>
         <SectionHeading
-          eyebrow="今日信号"
-          title="三件值得你继续理解的事"
-          description="这里给结论和方向。完整行情、行业证据与 AI 推理分别留在对应研究页面。"
+          eyebrow="今日重点"
+          title="先研究这一件事"
+          description="今天不需要追完所有变化。先判断上涨背后的预期，是否能被真实增长验证。"
         />
       </motion.div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {dailySignals.map((signal, index) => {
-          const Icon = signal.icon;
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+        <motion.div variants={fadeUp} transition={calmTransition}>
+          <Card className="h-full border-primary/20 bg-card/95">
+            <CardContent className="flex h-full flex-col p-5 lg:min-h-[390px] lg:p-7">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Badge variant="neutral"><BrainCircuit className="mr-1 size-3.5 text-ai-foreground" />首要研究</Badge>
+                <span className="text-xs text-muted-foreground">AI 置信度 {primaryResearch.confidence}%</span>
+              </div>
 
-          return (
-            <motion.div key={signal.label} variants={fadeUp} transition={{ ...calmTransition, delay: index * 0.04 }}>
-              <Link className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" href={signal.href}>
-                <Card className="h-full transition-[border-color,transform,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/25 group-hover:shadow-[0_10px_30px_rgba(30,42,36,0.06)]">
-                  <CardContent className="flex h-full min-h-[260px] flex-col p-5 lg:p-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                        <Icon className="size-4 text-primary" />
-                        {signal.label}
-                      </span>
-                      <span className="font-mono text-xs text-muted-foreground">0{index + 1}</span>
-                    </div>
+              <h3 className="mt-6 max-w-2xl text-2xl font-semibold leading-8 lg:text-[30px] lg:leading-10">
+                AI 算力的高预期，能否继续被订单与利润验证？
+              </h3>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">
+                产业趋势仍强，但市场已经计入较乐观的增长假设。今天更值得核对订单兑现、毛利率和主题拥挤度，而不是只看涨幅。
+              </p>
 
-                    <h3 className="mt-8 text-xl font-semibold leading-7">{signal.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{signal.summary}</p>
+              <div className="mt-6 rounded-lg border border-negative/15 bg-negative-soft/45 p-4">
+                <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-negative"><ShieldAlert className="size-3.5" />反方风险</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{primaryResearch.counterRisk}</p>
+              </div>
 
-                    <span className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                      {signal.takeaway}
-                      <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                    </span>
-                  </CardContent>
-                </Card>
-              </Link>
-            </motion.div>
-          );
-        })}
-      </div>
+              <div className="mt-auto flex flex-col gap-4 pt-6 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5"><Database className="size-3.5" />市场行情、行业资讯</span>
+                  <span className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" />更新 {todayBrief.updatedAt}</span>
+                </div>
+                <Button asChild className="shrink-0" variant="primary">
+                  <Link href="/ai-research">查看完整研究<ArrowRight className="size-4" /></Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-      <motion.div
-        variants={fadeUp}
-        transition={calmTransition}
-        className="mt-4 flex flex-col gap-4 rounded-2xl border border-border/75 bg-secondary/35 p-5 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="neutral">AI 研究摘要</Badge>
-            <span className="text-xs text-muted-foreground">置信度 {primaryResearch.confidence}%</span>
-          </div>
-          <p className="mt-3 max-w-3xl text-sm leading-6">
-            反方风险：{primaryResearch.counterRisk}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5"><Database className="size-3.5" />市场行情、行业资讯</span>
-            <span className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" />更新 {todayBrief.updatedAt}</span>
-          </div>
+        <div className="grid gap-4">
+          {supportingSignals.map((signal, index) => {
+            const Icon = signal.icon;
+            return (
+              <motion.div key={signal.label} variants={fadeUp} transition={{ ...calmTransition, delay: 0.04 + index * 0.04 }}>
+                <Link className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" href={signal.href}>
+                  <Card className="h-full transition-[border-color,transform] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/25">
+                    <CardContent className="flex h-full min-h-[124px] flex-col p-4 sm:min-h-[150px] sm:p-5">
+                      <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground"><Icon className="size-4 text-primary" />{signal.label}</span>
+                      <h3 className="mt-3 text-lg font-semibold leading-6 sm:mt-4">{signal.title}</h3>
+                      <p className="mt-2 hidden text-sm leading-6 text-muted-foreground sm:block">{signal.summary}</p>
+                      <span className="mt-auto inline-flex items-center gap-2 pt-3 text-sm font-medium group-hover:text-primary sm:pt-4">{signal.action}<ArrowRight className="size-4" /></span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
-        <Button asChild className="shrink-0" variant="secondary">
-          <Link href="/ai-research">进入 AI 投研<ArrowRight className="size-4" /></Link>
-        </Button>
-      </motion.div>
-
-      <div className="mt-3 max-w-xl">
-        <RiskDisclaimer compact />
       </div>
+
+      <div className="mt-3 max-w-xl"><RiskDisclaimer compact /></div>
     </motion.section>
   );
 }

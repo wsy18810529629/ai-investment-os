@@ -4,8 +4,6 @@ import { motion } from "framer-motion";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  BookOpen,
-  CheckCircle2,
   Clock3,
   Database,
   LineChart,
@@ -16,10 +14,11 @@ import { AppShell } from "@/components/shell/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { hotSectors, learningMoment, marketDigest, researchPicks, todayBrief } from "@/data/home";
+import { hotSectors, marketDigest, researchPicks, todayBrief } from "@/data/home";
 import { calmTransition, fadeUp, staggerContainer } from "@/components/home/motion-presets";
 import { MarketPulseChart } from "@/components/home/market-pulse-chart";
 import { RiskDisclaimer } from "@/components/home/risk-disclaimer";
+import { LearningExperience } from "@/features/learning/learning-experience";
 
 type PhasePageKind = "market" | "industry" | "ai-research" | "learning";
 
@@ -53,8 +52,8 @@ const pageMeta: Record<PhasePageKind, { title: string; prompt: string; eyebrow: 
     title: "学习",
     prompt: "问 AI：今天我应该学哪个投资概念？",
     eyebrow: "Learning Center",
-    headline: "下一步应该学什么？",
-    summary: "今天最值得补的不是一个新热点，而是理解估值分位、拥挤度和仓位纪律之间的关系。",
+    headline: "先搞懂自己买的是什么",
+    summary: "从股票、基金、ETF 和债券开始，建立一张清楚的投资地图，再逐步学习风险、估值与仓位。",
   },
 };
 
@@ -267,73 +266,5 @@ function AiResearchPageContent() {
 }
 
 function LearningPageContent() {
-  const lessons = [
-    {
-      title: learningMoment.title,
-      level: "入门",
-      time: "8 分钟",
-      progress: "继续",
-      points: learningMoment.points,
-    },
-    {
-      title: "如何理解拥挤度？",
-      level: "进阶",
-      time: "12 分钟",
-      progress: "下一课",
-      points: ["拥挤度描述交易是否集中在同一方向。", "高拥挤度不等于马上下跌，但会放大波动。", "需要结合估值、流动性和持仓结构判断。"],
-    },
-    {
-      title: "仓位纪律为什么重要？",
-      level: "入门",
-      time: "10 分钟",
-      progress: "建议学习",
-      points: ["仓位控制让判断错误时仍有修正空间。", "单一主题过高暴露会让组合被情绪牵引。", "纪律比预测更可重复。"],
-    },
-  ];
-
-  return (
-    <section className="grid gap-5 lg:grid-cols-[360px_1fr]">
-      <Card className="soft-panel">
-        <CardContent className="p-5">
-          <div className="grid size-10 place-items-center rounded-md border border-primary/25 bg-ai-soft text-primary">
-            <BookOpen className="size-4" />
-          </div>
-          <h3 className="mt-5 text-2xl font-semibold">今日学习路径</h3>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">{learningMoment.context}</p>
-          <Button className="mt-6" variant="primary">
-            继续学习
-          </Button>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4">
-        {lessons.map((lesson) => (
-          <Card key={lesson.title}>
-            <CardContent className="p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{lesson.level}</Badge>
-                    <Badge variant="neutral">{lesson.time}</Badge>
-                  </div>
-                  <h3 className="mt-3 text-xl font-semibold">{lesson.title}</h3>
-                </div>
-                <Button variant="secondary" size="sm">
-                  {lesson.progress}
-                </Button>
-              </div>
-              <div className="mt-5 grid gap-2">
-                {lesson.points.map((point) => (
-                  <div key={point} className="flex gap-3 rounded-lg border border-border/65 bg-secondary/35 p-3">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                    <p className="text-sm leading-6">{point}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </section>
-  );
+  return <LearningExperience />;
 }

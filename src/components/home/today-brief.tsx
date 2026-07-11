@@ -71,9 +71,11 @@ export function TodayBrief() {
             <span className="font-mono text-xs text-muted-foreground">09:30—15:00</span>
           </div>
 
-          <MarketPulseChart />
+          <div className="hidden lg:block">
+            <MarketPulseChart />
+          </div>
 
-          <div className="grid grid-cols-3 divide-x divide-border/80 border-y border-border/80">
+          <div className="mt-4 grid grid-cols-3 divide-x divide-border/80 border-y border-border/80 lg:mt-0">
             {[
               { label: "风险偏好", value: "57", delta: "+9" },
               { label: "流动性", value: "62", delta: "+7" },
@@ -91,7 +93,7 @@ export function TodayBrief() {
         </motion.aside>
       </div>
 
-      <div className="mt-6 max-w-xl">
+      <div className="mt-4 max-w-xl lg:mt-6">
         <RiskDisclaimer compact />
       </div>
     </motion.section>
