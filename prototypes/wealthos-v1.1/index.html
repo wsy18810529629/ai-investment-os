@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f1ea" />
+    <title>WealthOS · 私人财富管家</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <main id="top">
+        <header class="topbar">
+          <div class="topbar-left">
+            <a class="brand top-brand" href="#top" aria-label="WealthOS 首页"><span class="brand-mark">W</span><span>WealthOS</span></a>
+            <span class="header-divider"></span>
+            <div><p id="dateLabel"></p><h1 id="greeting">早上好，Weisy</h1><small class="companion-line" id="companionLine">Atlas 正在整理今天与你有关的信息</small></div>
+          </div>
+          <div class="top-actions">
+            <span class="live-dot"><i></i><span id="dataStatus">正在同步</span></span>
+            <button class="account-button" id="accountButton" aria-label="账号">未登录</button>
+            <button class="icon-button" id="themeToggle" aria-label="切换主题">◐</button>
+            <button class="ghost-button header-manage" id="manageProfile">投资画像</button>
+            <button class="ghost-button header-manage" id="manageAssets">管理资产</button>
+            <button class="ghost-button header-manage" id="openJournal">我的复盘</button>
+            <button class="primary-button" id="askButton">问问我的 AI</button>
+          </div>
+        </header>
+
+        <section class="hero-grid">
+          <article class="wealth-card" id="portfolio">
+            <div class="card-label"><span>财富净值</span><button class="ghost-button" id="privacyToggle">显示金额</button></div>
+            <div class="wealth-value" id="wealthValue" data-money="¥ 0">¥ •</div>
+            <div class="daily-change"><span class="up" id="positionCount">尚未录入资产</span><span id="marketValueHint">点击“管理资产”开始</span></div>
+            <div class="sparkline" aria-label="近七日资产趋势">
+              <svg viewBox="0 0 520 116" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#597263" stop-opacity=".23"/><stop offset="1" stop-color="#597263" stop-opacity="0"/></linearGradient></defs><path class="area" d="M0,93 C42,84 67,92 108,72 S172,83 212,58 S286,68 325,45 S393,51 430,29 S485,32 520,14 L520,116 L0,116Z"/><path class="line" d="M0,93 C42,84 67,92 108,72 S172,83 212,58 S286,68 325,45 S393,51 430,29 S485,32 520,14"/></svg>
+            </div>
+            <div class="period-row"><span>资产录入后自动汇总</span><strong id="cashRatio">—</strong></div>
+          </article>
+
+          <article class="health-card">
+            <div class="card-label"><span>财富健康度</span><span class="status-chip" id="healthStatus">待计算</span></div>
+            <div class="health-main">
+              <div class="score-ring" id="healthRing" style="--score:0"><span><b id="healthScore">—</b><small>/100</small></span></div>
+              <div><strong id="healthTitle">录入资产后计算</strong><p id="healthCopy">健康度由分散度、流动性和权益仓位共同计算。</p></div>
+            </div>
+            <div class="metric-row"><span>分散度<strong id="diversityScore">—</strong></span><span>流动性<strong id="liquidityScore">—</strong></span><span>抗波动<strong id="stabilityScore">—</strong></span></div>
+          </article>
+        </section>
+
+        <section class="brief-card" id="brief">
+          <div class="brief-head">
+            <div class="ai-orb">✦</div>
+            <div><p class="eyebrow">MORNING BRIEF · <span id="briefTime">08:00</span></p><h2>今天，与你的钱有关的三件事</h2></div>
+            <button class="ghost-button" id="readBrief">3 分钟读完 →</button>
+          </div>
+          <div class="brief-grid" id="briefGrid">
+            <article><span class="brief-index">01</span><div><strong>组合继续保持</strong><p>主要资产没有触发调整条件，避免被短期波动带着走。</p></div></article>
+            <article><span class="brief-index amber">02</span><div><strong>科技仓位需要留意</strong><p>主题集中度接近舒适区上沿，今天不建议继续追高。</p></div></article>
+            <article><span class="brief-index blue">03</span><div><strong>一个值得研究的方向</strong><p>宽基估值回到中性区间，可加入本周研究清单。</p></div></article>
+          </div>
+          <div class="advisor-note"><span>AI 判断</span><p id="advisorSummary">今天更重要的是保持纪律，而不是寻找交易。暂无必须执行的操作。</p><button id="whyButton">为什么？</button></div>
+        </section>
+
+        <section class="cfo-entry" id="cfoEntry">
+          <div class="cfo-avatar">A</div>
+          <div><p class="eyebrow">ATLAS · YOUR AI CFO</p><h2>今天想聊聊你的钱吗？</h2><p id="atlasMessage">我会结合你的资产、投资画像和今日研究数据回答，不知道的事情会明确告诉你。</p></div>
+          <button class="primary-button" id="startConversation">开始对话 →</button>
+        </section>
+
+        <section class="lower-grid">
+          <article class="panel" id="radar">
+            <div class="panel-head"><div><p class="eyebrow">WEALTH WEATHER</p><h2>今日财富天气</h2></div><span class="updated">基于观察池</span></div>
+            <div class="weather-main"><div class="weather-icon" id="weatherIcon">◐</div><div><strong id="weatherTitle">正在判断</strong><p id="weatherReason">正在读取今天的研究数据…</p></div></div>
+            <div class="weather-zones" id="marketList"></div>
+          </article>
+          <article class="panel action-panel">
+            <div class="panel-head"><div><p class="eyebrow">TODAY'S ACTION</p><h2>今天只做这三件事</h2></div><span class="progress">0 / 3</span></div>
+            <div class="action-list">
+              <label><input type="checkbox"><i></i><span><strong>不因波动调仓</strong><small>让计划替你过滤情绪</small></span></label>
+              <label><input type="checkbox"><i></i><span><strong>阅读一份 3 分钟简报</strong><small>只看与你的持仓有关的信息</small></span></label>
+              <label><input type="checkbox"><i></i><span><strong>记录今天的判断</strong><small>一句话就够了</small></span></label>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel allocation-panel secondary-workspace">
+          <div class="panel-head"><div><p class="eyebrow">ASSET OVERVIEW</p><h2>资产结构</h2></div><button class="ghost-button" id="viewAssets">查看 / 编辑资产 →</button></div>
+          <div class="allocation-content">
+            <div class="donut" id="allocationDonut" aria-label="资产配置图"><div></div></div>
+            <div class="legend" id="allocationLegend"></div>
+            <div class="allocation-copy"><span>当前配置</span><strong id="allocationTitle">等待录入资产</strong><p id="allocationAdvice">录入现金、基金、股票等资产后，这里会计算真实配置与风险提示。</p></div>
+          </div>
+        </section>
+        <section class="lower-grid journal-grid secondary-workspace" id="journal">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">INVESTMENT JOURNAL</p><h2>记录今天的判断</h2></div><span class="updated" id="journalCount">0 条记录</span></div>
+            <form id="journalForm" class="journal-form">
+              <select name="action"><option>继续观察</option><option>准备研究</option><option>决定买入</option><option>决定卖出</option><option>保持不动</option></select>
+              <input name="target" placeholder="标的或主题" required>
+              <textarea name="reason" placeholder="为什么这样判断？当时看到了什么？" required></textarea>
+              <button class="primary-button" type="submit">保存今天的判断</button>
+            </form>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">AI REVIEW</p><h2>你的投资习惯</h2></div><button class="ghost-button" id="clearJournal">清空记录</button></div>
+            <div class="review-summary" id="reviewSummary">记录第一条判断后，这里会逐步形成你的投资行为画像。</div>
+            <div class="journal-list" id="journalList"></div>
+          </article>
+        </section>
+        <footer>WealthOS 只提供研究辅助，不构成投资建议。所有行动由你最终确认。</footer>
+      </main>
+    </div>
+
+    <dialog id="advisorDialog">
+      <button class="dialog-close" aria-label="关闭">×</button>
+      <div class="cfo-avatar dialog-avatar">A</div><p class="eyebrow">ATLAS · YOUR AI CFO</p><h2>今天想了解什么？</h2>
+      <div class="prompt-list"><button data-question="risk">我的组合今天有什么风险？</button><button data-question="hold">为什么今天不建议调仓？</button><button data-question="news">帮我解释一条市场新闻</button></div>
+      <div class="advisor-answer" id="advisorAnswer">选择一个问题，或在下面输入你的问题。</div>
+      <form id="advisorForm"><input id="advisorInput" placeholder="直接问关于你的资产、市场或计划…" autofocus><button class="primary-button">发送</button></form>
+    </dialog>
+    <dialog id="assetDialog" class="wide-dialog">
+      <button class="dialog-close" data-close="assetDialog" aria-label="关闭">×</button>
+      <p class="eyebrow">MY PORTFOLIO</p><h2>我的资产</h2>
+      <p class="dialog-intro">数据只保存在当前浏览器，不会自动交易或上传。</p>
+      <form id="assetForm" class="asset-form">
+        <input name="name" placeholder="资产名称，如 沪深300ETF" required>
+        <select name="type"><option value="equity">股票</option><option value="fund">基金</option><option value="cash">现金</option><option value="other">其他</option></select>
+        <input name="value" type="number" min="0" step="0.01" placeholder="当前市值" required>
+        <input name="cost" type="number" min="0" step="0.01" placeholder="投入成本（可选）">
+        <input name="boughtAt" type="date" aria-label="买入日期">
+        <input name="thesis" placeholder="持有理由（可选）">
+        <button class="primary-button" type="submit">添加资产</button>
+      </form>
+      <div class="asset-table" id="assetTable"></div>
+    </dialog>
+    <dialog id="profileDialog">
+      <button class="dialog-close" data-close="profileDialog" aria-label="关闭">×</button>
+      <p class="eyebrow">INVESTOR PROFILE</p><h2>我的投资画像</h2>
+      <p class="dialog-intro">这些信息用于调整日报表达和风险提醒。</p>
+      <form id="profileForm" class="profile-form">
+        <label>风险偏好<select name="risk"><option value="conservative">保守</option><option value="balanced">稳健</option><option value="growth">成长</option></select></label>
+        <label>投资目标<select name="goal"><option>长期增值</option><option>稳健保值</option><option>现金流</option><option>退休准备</option></select></label>
+        <label>投资周期<select name="horizon"><option>3 年以内</option><option>3-5 年</option><option>5-10 年</option><option>10 年以上</option></select></label>
+        <label>关注方向<input name="interests" placeholder="例如：AI、红利、宽基"></label>
+        <button class="primary-button" type="submit">保存画像</button>
+        <button class="ghost-button" type="button" id="restartOnboarding">重新运行首次引导</button>
+      </form>
+    </dialog>
+    <dialog id="briefDialog" class="wide-dialog">
+      <button class="dialog-close" data-close="briefDialog" aria-label="关闭">×</button>
+      <p class="eyebrow">TODAY'S RESEARCH</p><h2>今日研究详情</h2>
+      <div id="briefDetail"></div>
+    </dialog>
+    <dialog id="onboardingDialog" class="onboarding-dialog">
+      <div class="onboarding-brand"><span class="brand-mark">W</span><strong>欢迎来到 WealthOS</strong></div>
+      <p class="eyebrow">60 SECOND SETUP</p><h2>让 Atlas 先了解你的钱</h2>
+      <p class="dialog-intro">完成四个选择，首页才会真正属于你。所有内容只保存在当前浏览器。</p>
+      <form id="onboardingForm" class="onboarding-form">
+        <fieldset><legend>你最主要的财富目标？</legend><label><input type="radio" name="goal" value="长期增值" checked><span>长期增值<small>让财富长期跑赢通胀</small></span></label><label><input type="radio" name="goal" value="稳健保值"><span>稳健保值<small>降低波动，守住已有财富</small></span></label><label><input type="radio" name="goal" value="提前退休"><span>提前退休<small>逐步建立可持续现金流</small></span></label></fieldset>
+        <fieldset><legend>面对 20% 的短期下跌，你更接近？</legend><label><input type="radio" name="risk" value="conservative"><span>会很不安<small>更适合保守提醒</small></span></label><label><input type="radio" name="risk" value="balanced" checked><span>能接受但会关注<small>保持稳健与成长平衡</small></span></label><label><input type="radio" name="risk" value="growth"><span>愿意承受<small>更关注长期成长机会</small></span></label></fieldset>
+        <label class="onboarding-input">计划投资多久？<select name="horizon"><option>3 年以内</option><option>3-5 年</option><option selected>5-10 年</option><option>10 年以上</option></select></label>
+        <label class="onboarding-input">最关注的方向<input name="interests" placeholder="例如：AI、宽基、红利"></label>
+        <button class="primary-button" type="submit">建立我的财富画像</button>
+        <button class="ghost-button" type="button" id="skipOnboarding">稍后设置</button>
+      </form>
+    </dialog>
+    <dialog id="authDialog" class="auth-dialog">
+      <div class="onboarding-brand"><span class="brand-mark">W</span><strong>WealthOS 同步</strong></div>
+      <p class="eyebrow">PRIVATE SYNC</p><h2 id="authTitle">登录后在手机与 Mac 同步</h2>
+      <p class="dialog-intro">账号和财富数据只保存在你的 Mac 数据库中。</p>
+      <form id="authForm" class="profile-form">
+        <label>用户名<input name="username" autocomplete="username" required minlength="2" maxlength="32"></label>
+        <label>密码<input name="password" type="password" autocomplete="current-password" required minlength="8"></label>
+        <div class="auth-error" id="authError"></div>
+        <button class="primary-button" type="submit" id="authSubmit">登录</button>
+        <button class="ghost-button" type="button" id="authSwitch">第一次使用？创建账号</button>
+        <button class="ghost-button" type="button" id="authLater">暂时离线使用</button>
+      </form>
+    </dialog>
+    <script src="./app.js"></script>
+  </body>
+</html>
